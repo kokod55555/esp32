@@ -3,8 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเช็กข้อมูลนักเรียน - Google Sheets</title>
+    <title>Student Distance Dashboard</title>
+    <!-- นำเข้า Google Fonts (Inter) ให้หน้าเว็บดูทันสมัย -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg-main: #f8fafc;
+            --surface: #ffffff;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
@@ -12,159 +31,453 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f4f7f6;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        header {
-            background-color: #2c3e50;
-            color: #ffffff;
+        /* Navbar */
+        .navbar {
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
             padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        header h1 {
-            font-size: 1.5rem;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
         }
 
-        nav a {
-            color: #ffffff;
-            text-decoration: none;
-            margin-left: 1.5rem;
-            transition: color 0.3s;
-        }
-
-        nav a:hover {
-            color: #1abc9c;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        /* สไตล์ของตารางข้อมูล */
-        .table-responsive {
-            overflow-x: auto;
-            background: white;
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        /* Layout Main */
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.25rem 1.5rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-top: 0.25rem;
+        }
+
+        /* Controls Section (Search & Filter) */
+        .table-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .card-toolbar {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 360px;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .btn-refresh {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-refresh:hover {
+            background: var(--bg-main);
+            border-color: #cbd5e1;
+        }
+
+        /* Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-        }
-
-        th, td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #ddd;
+            font-size: 0.9rem;
         }
 
         th {
-            background-color: #2c3e50;
-            color: white;
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            padding: 0.85rem 1.5rem;
             font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
         }
 
-        tr:hover {
-            background-color: #f1f1f1;
+        td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
         }
 
-        .loading {
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Badges & Accents */
+        .student-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .student-id {
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .distance-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: #e0e7ff;
+            color: var(--primary);
+            font-weight: 600;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+        }
+
+        .time-text {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Loading & Empty State */
+        .state-container {
             text-align: center;
-            padding: 2rem;
-            font-size: 1.1rem;
-            color: #7f8c8d;
+            padding: 3rem 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         footer {
-            background-color: #2c3e50;
-            color: white;
             text-align: center;
-            padding: 1.5rem;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
             margin-top: 3rem;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>Student Tracker</h1>
-        <nav>
-            <a href="#">หน้าแรก</a>
-            <a href="#">รายงาน</a>
-        </nav>
-    </header>
+    <!-- Header Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="brand">
+                <div class="brand-icon">📍</div>
+                <span>Distance Tracker</span>
+            </div>
+        </div>
+    </nav>
 
-    <main class="container">
-        <h2 style="text-align: center; color: #2c3e50;">รายชื่อและระยะทาง</h2>
-        
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>เวลา (Timestamp)</th>
-                        <th>ชื่อ - นามสกุล</th>
-                        <th>รหัสนักเรียน</th>
-                        <th>ระยะทาง (Distance)</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    <tr>
-                        <td colspan="4" class="loading">กำลังโหลดข้อมูล...</td>
-                    </tr>
-                </tbody>
-            </table>
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">แดชบอร์ดสรุปการเดินทาง</h1>
+            <p class="page-subtitle">อัปเดตข้อมูลล่าสุดแบบ Real-time จากระบบ Google Sheets</p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">นักเรียนทั้งหมด</div>
+                <div class="stat-value" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">ระยะทางรวม</div>
+                <div class="stat-value" id="stat-sum-distance">0 <span style="font-size: 1rem; font-weight: 400;">กม.</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">ระยะทางเฉลี่ย</div>
+                <div class="stat-value" id="stat-avg-distance">0 <span style="font-size: 1rem; font-weight: 400;">กม.</span></div>
+            </div>
+        </div>
+
+        <!-- Main Table Card -->
+        <div class="table-card">
+            <!-- Toolbar -->
+            <div class="card-toolbar">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" class="search-input" placeholder="ค้นหาชื่อ หรือรหัสนักเรียน..." onkeyup="filterData()">
+                </div>
+                <button class="btn-refresh" onclick="fetchStudentData()">
+                    🔄 รีเฟรชข้อมูล
+                </button>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>เวลา (Timestamp)</th>
+                            <th>รหัสนักเรียน</th>
+                            <th>ชื่อ - นามสกุล</th>
+                            <th>ระยะทาง</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- จะถูกเติมข้อมูลด้วย JavaScript -->
+                    </tbody>
+                </table>
+                <div id="state-view"></div>
+            </div>
         </div>
     </main>
 
     <footer>
-        <p>&copy; 2026 Student Tracker System</p>
+        <p>&copy; 2026 Student Distance Tracking System. All rights reserved.</p>
     </footer>
 
     <script>
-        // 📌 ใส่ Web App URL ที่ได้จาก Google Apps Script ที่นี่
+        // 📌 วาง Web App URL จาก Google Apps Script ตรงนี้
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkI2SxiLmQyqqVcyPMRp5FkvHZJFoV4nnjQc6NSY2vw2O2cSWoNoKOrqvJMODyKFc/exec';
+        
+        let globalData = []; // เก็บข้อมูลไว้ใช้ในการค้นหาและคำนวณ Stat
 
         async function fetchStudentData() {
             const tableBody = document.getElementById('table-body');
-            
+            const stateView = document.getElementById('state-view');
+
+            // แสดงสถานะกำลังโหลดแบบวงกลมหมุน (Spinner)
+            tableBody.innerHTML = '';
+            stateView.innerHTML = `
+                <div class="state-container">
+                    <div class="spinner"></div>
+                    <p>กำลังโหลดข้อมูลล่าสุด...</p>
+                </div>
+            `;
+
             try {
                 const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
+                globalData = await response.json();
 
-                if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="loading">ไม่พบข้อมูลในระบบ</td></tr>';
+                if (!globalData || globalData.length === 0) {
+                    stateView.innerHTML = `<div class="state-container"><p>ไม่พบข้อมูลในระบบ</p></div>`;
+                    updateStats([]);
                     return;
                 }
 
-                tableBody.innerHTML = ''; // เคลียร์สถานะกำลังโหลด
-
-                data.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${item.timestamp || '-'}</td>
-                        <td><strong>${item.name || '-'}</strong></td>
-                        <td>${item.studentId || '-'}</td>
-                        <td>${item.distance || '-'}</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
+                stateView.innerHTML = ''; // ซ่อน Loading
+                renderTable(globalData);
+                updateStats(globalData);
 
             } catch (error) {
-                console.error('Error fetching data:', error);
-                tableBody.innerHTML = '<tr><td colspan="4" class="loading" style="color: red;">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>';
+                console.error('Error:', error);
+                stateView.innerHTML = `
+                    <div class="state-container" style="color: #ef4444;">
+                        <p>⚠️ ไม่สามารถเชื่อมต่อกับ Google Sheetได้ กรุณาตรวจสอบลิงก์ Script URL</p>
+                    </div>
+                `;
             }
         }
 
+        // ฟังก์ชันสร้างตารางข้อมูล
+        function renderTable(data) {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+
+            if(data.length === 0) {
+                document.getElementById('state-view').innerHTML = `<div class="state-container"><p>ไม่พบข้อมูลที่ค้นหา</p></div>`;
+                return;
+            } else {
+                document.getElementById('state-view').innerHTML = '';
+            }
+
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="time-text">${item.timestamp || '-'}</td>
+                    <td><span class="student-id">${item.studentId || '-'}</span></td>
+                    <td class="student-name">${item.name || '-'}</td>
+                    <td><span class="distance-badge">${item.distance || '0'}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // ฟังก์ชันคำนวณและแสดงค่า Stats
+        function updateStats(data) {
+            document.getElementById('stat-total').innerText = data.length.toLocaleString();
+
+            let totalDist = 0;
+            let validCount = 0;
+
+            data.forEach(item => {
+                // แปลงค่าระยะทางเป็นตัวเลข
+                let dist = parseFloat(item.distance);
+                if (!isNaN(dist)) {
+                    totalDist += dist;
+                    validCount++;
+                }
+            });
+
+            const avgDist = validCount > 0 ? (totalDist / validCount).toFixed(1) : 0;
+
+            document.getElementById('stat-sum-distance').innerHTML = `${totalDist.toLocaleString()} <span style="font-size: 1rem; font-weight: 400;">กม.</span>`;
+            document.getElementById('stat-avg-distance').innerHTML = `${avgDist} <span style="font-size: 1rem; font-weight: 400;">กม.</span>`;
+        }
+
+        // ฟังก์ชันค้นหาข้อมูลแบบ Real-time
+        function filterData() {
+            const keyword = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            const filtered = globalData.filter(item => {
+                const nameMatch = (item.name || '').toLowerCase().includes(keyword);
+                const idMatch = (item.studentId || '').toString().toLowerCase().includes(keyword);
+                return nameMatch || idMatch;
+            });
+
+            renderTable(filtered);
+        }
+
+        // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้า
         fetchStudentData();
     </script>
 </body>
