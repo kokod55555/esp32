@@ -195,7 +195,7 @@
             bottom: 0;
             left: 98px;
             transform-origin: bottom center;
-            transform: rotate(-90deg); /* Range -90deg to 90deg */
+            transform: rotate(-90deg);
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 2px;
         }
@@ -213,7 +213,7 @@
 
         /* Card 3: Alert Banner */
         .alert-card {
-            background: #ffedd5; /* Default background */
+            background: #dcfce7;
             transition: background 0.3s ease;
         }
 
@@ -331,7 +331,7 @@
                         <div class="gauge-needle" id="gauge-needle"></div>
                     </div>
                     <div class="gauge-labels">
-                        <span style="color: var(--color-green);">Green<br>Normal<br>50-100cm</span>
+                        <span style="color: var(--color-green);">Green<br>Normal<br>> 50cm</span>
                         <span style="color: var(--color-yellow);">Warning<br>20-50cm</span>
                         <span style="color: var(--color-red);">Red<br>Alert<br>0-20cm</span>
                     </div>
@@ -365,17 +365,17 @@
 
         <!-- Footer -->
         <footer>
-            Developed by: Student Name กฤติเดช จิตรศิลป์| GitHub Repository: <a href="https://github.com" target="_blank">https://github.com/kokod55555/esp32.git</a>
+            Developed by: Student Name: กฤติเดช จิตรศิลป์ | GitHub Repository: <a href="https://github.com" target="_blank">https://github.com/kokod55555/esp32.git</a>
         </footer>
     </div>
 
     <script>
-        // 📌 URL ของ Google Apps Script ของคุณ
+        // 📌 URL ของ Google Apps Script
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkI2SxiLmQyqqVcyPMRp5FkvHZJFoV4nnjQc6NSY2vw2O2cSWoNoKOrqvJMODyKFc/exec';
 
         let distanceChart;
 
-        // เริ่มต้นสร้าง Line Chart
+        // เริ่มต้นสร้าง Line Chart แบบ Dynamic Max Value (รองรับค่าเกิน 100 cm)
         function initChart() {
             const ctx = document.getElementById('distanceChart').getContext('2d');
             distanceChart = new Chart(ctx, {
@@ -400,7 +400,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 100,
+                            max: null, // ปรับแกน Y อัตโนมัติตามค่าจริง ไม่จำกัดเพดาน 100
                             title: { display: true, text: 'Distance (cm)' }
                         },
                         x: {
@@ -414,18 +414,19 @@
             });
         }
 
-        // อัปเดตเข็ม Gauge (คำนวณแปลงค่า 0-100cm เป็นมุม -90 ถึง 90 องศา)
+        // อัปเดตเข็ม Gauge (หากเกิน 100cm เข็มจะชี้ไปที่ฝั่งซ้ายสุด/Green)
         function updateGauge(distance) {
             const needle = document.getElementById('gauge-needle');
-            // จำกัดช่วงค่าระหว่าง 0 - 100 cm
+            
+            // จำกัดสเกลเข็มไว้ที่ช่วง 0 - 100 cm
             let clampedDist = Math.max(0, Math.min(100, distance));
             
-            // 0cm = 90deg (ขวาสุด-Red), 100cm = -90deg (ซ้ายสุด-Green)
+            // คำนวณองศาเข็ม (-90deg ถึง 90deg)
             let angle = 90 - (clampedDist / 100) * 180;
             needle.style.transform = `rotate(${angle}deg)`;
         }
 
-        // อัปเดตแถบแจ้งเตือน (Alert Banner) ตามเกณฑ์ระยะทาง
+        // อัปเดตสถานะ Alert (รองรับค่ามากกว่า 50cm ไปจนถึงไร้ขีดจำกัด)
         function updateAlertStatus(distance) {
             const alertCard = document.getElementById('alert-card');
             const alertBanner = document.getElementById('alert-banner');
@@ -445,7 +446,7 @@
                 alertText.innerText = 'STATUS: WARNING';
                 alertIcon.innerText = '⚠️';
             } else {
-                // NORMAL (50 - 100+ cm)
+                // NORMAL (>= 50 cm ขึ้นไปทั้งหมด)
                 alertCard.style.background = '#dcfce7';
                 alertBanner.style.background = 'var(--color-green)';
                 alertText.innerText = 'STATUS: NORMAL';
@@ -460,22 +461,20 @@
                 const data = await response.json();
 
                 if (data && data.length > 0) {
-                    // ดึงค่าล่าสุด (แถวสุดท้าย)
                     const latest = data[data.length - 1];
                     const distanceVal = parseFloat(latest.distance) || 0;
 
-                    // 1. อัปเดต ตัวเลขระยะทาง
+                    // 1. แสดงตัวเลขระยะทางตามค่าจริงเสมอ (แม้เกิน 100 ก็แสดงได้)
                     document.getElementById('current-distance').innerText = `${distanceVal.toFixed(1)} cm`;
                     document.getElementById('last-updated').innerText = `Last Updated: ${latest.timestamp || 'Just now'}`;
 
-                    // 2. อัปเดต Gauge & Alert Banner
+                    // 2. อัปเดต Gauge & Alert Status
                     updateGauge(distanceVal);
                     updateAlertStatus(distanceVal);
 
-                    // 3. อัปเดตข้อมูลกราฟเส้น (แสดงสูงสุด 10 ข้อมูลล่าสุด)
+                    // 3. อัปเดตกราฟเส้น (แสดง 10 ค่าล่าสุด)
                     const recentData = data.slice(-10);
                     distanceChart.data.labels = recentData.map(item => {
-                        // ดึงเฉพาะเวลา HH:mm:ss
                         return item.timestamp ? item.timestamp.split(' ')[1] || item.timestamp : '';
                     });
                     distanceChart.data.datasets[0].data = recentData.map(item => parseFloat(item.distance) || 0);
@@ -491,7 +490,7 @@
         window.onload = () => {
             initChart();
             fetchSensorData();
-            // ดึงข้อมูลใหม่อัตโนมัติทุกๆ 5 วินาที
+            // ดึงข้อมูลเรียลไทม์ทุกๆ 5 วินาที
             setInterval(fetchSensorData, 5000);
         };
     </script>
