@@ -3,482 +3,497 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Distance Dashboard</title>
-    <!-- นำเข้า Google Fonts (Inter) ให้หน้าเว็บดูทันสมัย -->
+    <title>IoT Distance Sensor Monitor</title>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js สำหรับวาดกราฟเส้น -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --bg-main: #f8fafc;
-            --surface: #ffffff;
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --text-main: #0f172a;
+            --bg-body: #e2e8f0;
+            --sidebar-bg: #0f172a;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
             --text-muted: #64748b;
-            --border: #e2e8f0;
-            --radius: 12px;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+            --color-green: #22c55e;
+            --color-yellow: #eab308;
+            --color-red: #ef4444;
+            --border-radius: 16px;
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', sans-serif;
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg-main);
+            background-color: var(--bg-body);
             color: var(--text-main);
-            line-height: 1.5;
-            -webkit-font-smoothing: antialiased;
+            display: flex;
+            min-height: 100vh;
         }
 
-        /* Navbar */
-        .navbar {
-            background-color: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+        /* Sidebar ด้านซ้าย */
+        .sidebar {
+            width: 70px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 0;
+            gap: 2rem;
         }
 
-        .nav-container {
-            max-width: 1200px;
+        .sidebar-brand {
+            color: #38bdf8;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            color: #94a3b8;
+            font-size: 1.25rem;
+            cursor: pointer;
+        }
+
+        .sidebar-menu .active {
+            color: #ffffff;
+        }
+
+        /* Layout หลัก */
+        .wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            padding: 2rem;
+            flex: 1;
+            max-width: 1400px;
             margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Top Header */
+        .header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 1.5rem;
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: var(--primary);
-        }
-
-        .brand-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--primary);
-            color: white;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-        }
-
-        /* Layout Main */
-        .main-container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-        }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-title {
+        .header-title {
             font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-main);
+            font-weight: 800;
+            color: #0f172a;
         }
 
-        .page-subtitle {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            margin-top: 0.25rem;
+        .cloud-status {
+            background: #ffffff;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
-        /* Stats Cards */
-        .stats-grid {
+        .dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--color-green);
+            border-radius: 50%;
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
-        .stat-card {
-            background: var(--surface);
-            padding: 1.25rem 1.5rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-sm);
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
 
-        .stat-label {
-            font-size: 0.85rem;
-            font-weight: 500;
+        /* Card 1: Distance Display */
+        .distance-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1;
+            margin-bottom: 1rem;
+        }
+
+        .last-updated {
+            background: #f1f5f9;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
             color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-weight: 500;
         }
 
-        .stat-value {
-            font-size: 1.85rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-top: 0.25rem;
-        }
-
-        /* Controls Section (Search & Filter) */
-        .table-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-md);
+        /* Card 2: Custom Gauge Chart */
+        .gauge-wrapper {
+            position: relative;
+            width: 200px;
+            height: 100px;
             overflow: hidden;
         }
 
-        .card-toolbar {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
+        .gauge-body {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 270deg,
+                var(--color-green) 0deg 60deg,
+                var(--color-yellow) 60deg 120deg,
+                var(--color-red) 120deg 180deg
+            );
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .gauge-inner {
+            width: 140px;
+            height: 140px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 30px;
+            left: 30px;
+        }
+
+        .gauge-needle {
+            width: 4px;
+            height: 80px;
+            background: #334155;
+            position: absolute;
+            bottom: 0;
+            left: 98px;
+            transform-origin: bottom center;
+            transform: rotate(-90deg); /* Range -90deg to 90deg */
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2px;
+        }
+
+        .gauge-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        /* Card 3: Alert Banner */
+        .alert-card {
+            background: #ffedd5; /* Default background */
+            transition: background 0.3s ease;
+        }
+
+        .alert-banner {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            background: var(--color-green);
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: background 0.3s ease;
         }
 
-        .search-box {
-            position: relative;
-            flex: 1;
-            max-width: 360px;
-            width: 100%;
+        /* Bottom Grid: Chart & System Info */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 2.2fr 1fr;
+            gap: 1.5rem;
         }
 
-        .search-input {
-            width: 100%;
-            padding: 0.6rem 1rem 0.6rem 2.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
+        .chart-card {
+            align-items: stretch;
+            height: 320px;
+        }
+
+        .system-info-card {
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 0.75rem;
+        }
+
+        .info-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-item {
             font-size: 0.9rem;
-            outline: none;
-            transition: all 0.2s;
-        }
-
-        .search-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 0.85rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .btn-refresh {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-main);
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-refresh:hover {
-            background: var(--bg-main);
-            border-color: #cbd5e1;
-        }
-
-        /* Table */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
-        th {
-            background-color: #f8fafc;
-            color: var(--text-muted);
-            padding: 0.85rem 1.5rem;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            border-bottom: 1px solid var(--border);
-        }
-
-        td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
             color: var(--text-main);
         }
 
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tbody tr {
-            transition: background-color 0.15s ease;
-        }
-
-        tbody tr:hover {
-            background-color: #f1f5f9;
-        }
-
-        /* Badges & Accents */
-        .student-name {
+        .info-item span {
             font-weight: 600;
-            color: var(--text-main);
         }
 
-        .student-id {
-            font-family: monospace;
-            background: #f1f5f9;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            color: #475569;
-        }
-
-        .distance-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            background-color: #e0e7ff;
-            color: var(--primary);
-            font-weight: 600;
-            border-radius: 9999px;
-            font-size: 0.85rem;
-        }
-
-        .time-text {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        /* Loading & Empty State */
-        .state-container {
-            text-align: center;
-            padding: 3rem 1.5rem;
-            color: var(--text-muted);
-        }
-
-        .spinner {
-            width: 28px;
-            height: 28px;
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 1rem auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
+        /* Footer */
         footer {
+            background-color: #0f172a;
+            color: #94a3b8;
             text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
+            padding: 1rem;
             font-size: 0.85rem;
-            margin-top: 3rem;
+        }
+
+        footer a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .bottom-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Header Navbar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="brand">
-                <div class="brand-icon">📍</div>
-                <span>ESP32</span>
-            </div>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-brand">⚡</div>
+        <div class="sidebar-menu">
+            <div class="active">⌂</div>
+            <div>🕒</div>
+            <div>⚙</div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <main class="main-container">
-        <div class="page-header">
-            <h1 class="page-title">แดชบอร์ด ESP 32 Ultrasonic</h1>
-            <p class="page-subtitle">อัปเดตข้อมูลล่าสุดแบบ Real-time จากระบบ Google Sheets</p>
-        </div>
-
-        <!-- Summary Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">นักเรียนทั้งหมด</div>
-                <div class="stat-value" id="stat-total">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">ระยะทางรวม</div>
-                <div class="stat-value" id="stat-sum-distance">0 <span style="font-size: 1rem; font-weight: 400;">กม.</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">ระยะทางเฉลี่ย</div>
-                <div class="stat-value" id="stat-avg-distance">0 <span style="font-size: 1rem; font-weight: 400;">กม.</span></div>
-            </div>
-        </div>
-
-        <!-- Main Table Card -->
-        <div class="table-card">
-            <!-- Toolbar -->
-            <div class="card-toolbar">
-                <div class="search-box">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="search-input" class="search-input" placeholder="ค้นหาชื่อ หรือรหัสนักเรียน..." onkeyup="filterData()">
+    <!-- Main Wrapper -->
+    <div class="wrapper">
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header-bar">
+                <h1 class="header-title">IoT Distance Sensor Monitor</h1>
+                <div class="cloud-status">
+                    <div class="dot"></div>
+                    <span>Cloud Status: <span style="color: var(--color-green);">Connected</span></span>
                 </div>
-                <button class="btn-refresh" onclick="fetchStudentData()">
-                    🔄 รีเฟรชข้อมูล
-                </button>
             </div>
 
-            <!-- Data Table -->
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>เวลา (Timestamp)</th>
-                            <th>รหัสนักเรียน</th>
-                            <th>ชื่อ - นามสกุล</th>
-                            <th>ระยะทาง</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body">
-                        <!-- จะถูกเติมข้อมูลด้วย JavaScript -->
-                    </tbody>
-                </table>
-                <div id="state-view"></div>
+            <!-- Top Cards Grid -->
+            <div class="dashboard-grid">
+                <!-- Numeric Display Card -->
+                <div class="card">
+                    <div class="distance-value" id="current-distance">--.- cm</div>
+                    <div class="last-updated" id="last-updated">Last Updated: Loading...</div>
+                </div>
+
+                <!-- Gauge Visualization Card -->
+                <div class="card">
+                    <div class="gauge-wrapper">
+                        <div class="gauge-body"></div>
+                        <div class="gauge-inner"></div>
+                        <div class="gauge-needle" id="gauge-needle"></div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span style="color: var(--color-green);">Green<br>Normal<br>50-100cm</span>
+                        <span style="color: var(--color-yellow);">Warning<br>20-50cm</span>
+                        <span style="color: var(--color-red);">Red<br>Alert<br>0-20cm</span>
+                    </div>
+                </div>
+
+                <!-- Alert Banner Card -->
+                <div class="card alert-card" id="alert-card">
+                    <div class="alert-banner" id="alert-banner">
+                        <span id="alert-text">STATUS: NORMAL</span>
+                        <span id="alert-icon">✔</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section (Chart & System Info) -->
+            <div class="bottom-grid">
+                <!-- Line Chart Card -->
+                <div class="card chart-card">
+                    <canvas id="distanceChart"></canvas>
+                </div>
+
+                <!-- System Info Card -->
+                <div class="card system-info-card">
+                    <div class="info-title">system info</div>
+                    <div class="info-item"><span>Device ID:</span> ESP32-SENSOR-01</div>
+                    <div class="info-item"><span>Firmware Version:</span> 1.2.0</div>
+                    <div class="info-item"><span>Sensor Type:</span> Ultrasonic HC-SR04</div>
+                </div>
             </div>
         </div>
-    </main>
 
-    <footer>
-        <p>&copy; 2026 Student Distance Tracking System. All rights reserved.</p>
-    </footer>
+        <!-- Footer -->
+        <footer>
+            Developed by: Student Name (ID: 12345678) | GitHub Repository: <a href="https://github.com" target="_blank">github.com/student-iot-project</a>
+        </footer>
+    </div>
 
     <script>
-        // 📌 วาง Web App URL จาก Google Apps Script ตรงนี้
+        // 📌 URL ของ Google Apps Script ของคุณ
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwkI2SxiLmQyqqVcyPMRp5FkvHZJFoV4nnjQc6NSY2vw2O2cSWoNoKOrqvJMODyKFc/exec';
-        
-        let globalData = []; // เก็บข้อมูลไว้ใช้ในการค้นหาและคำนวณ Stat
 
-        async function fetchStudentData() {
-            const tableBody = document.getElementById('table-body');
-            const stateView = document.getElementById('state-view');
+        let distanceChart;
 
-            // แสดงสถานะกำลังโหลดแบบวงกลมหมุน (Spinner)
-            tableBody.innerHTML = '';
-            stateView.innerHTML = `
-                <div class="state-container">
-                    <div class="spinner"></div>
-                    <p>กำลังโหลดข้อมูลล่าสุด...</p>
-                </div>
-            `;
+        // เริ่มต้นสร้าง Line Chart
+        function initChart() {
+            const ctx = document.getElementById('distanceChart').getContext('2d');
+            distanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Distance (cm)',
+                        data: [],
+                        borderColor: '#38bdf8',
+                        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#38bdf8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: { display: true, text: 'Distance (cm)' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Time' }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
 
+        // อัปเดตเข็ม Gauge (คำนวณแปลงค่า 0-100cm เป็นมุม -90 ถึง 90 องศา)
+        function updateGauge(distance) {
+            const needle = document.getElementById('gauge-needle');
+            // จำกัดช่วงค่าระหว่าง 0 - 100 cm
+            let clampedDist = Math.max(0, Math.min(100, distance));
+            
+            // 0cm = 90deg (ขวาสุด-Red), 100cm = -90deg (ซ้ายสุด-Green)
+            let angle = 90 - (clampedDist / 100) * 180;
+            needle.style.transform = `rotate(${angle}deg)`;
+        }
+
+        // อัปเดตแถบแจ้งเตือน (Alert Banner) ตามเกณฑ์ระยะทาง
+        function updateAlertStatus(distance) {
+            const alertCard = document.getElementById('alert-card');
+            const alertBanner = document.getElementById('alert-banner');
+            const alertText = document.getElementById('alert-text');
+            const alertIcon = document.getElementById('alert-icon');
+
+            if (distance < 20) {
+                // RED ALERT (0 - 20 cm)
+                alertCard.style.background = '#fee2e2';
+                alertBanner.style.background = 'var(--color-red)';
+                alertText.innerText = 'STATUS: ALERT';
+                alertIcon.innerText = '✖';
+            } else if (distance >= 20 && distance < 50) {
+                // WARNING (20 - 50 cm)
+                alertCard.style.background = '#fef9c3';
+                alertBanner.style.background = 'var(--color-yellow)';
+                alertText.innerText = 'STATUS: WARNING';
+                alertIcon.innerText = '⚠️';
+            } else {
+                // NORMAL (50 - 100+ cm)
+                alertCard.style.background = '#dcfce7';
+                alertBanner.style.background = 'var(--color-green)';
+                alertText.innerText = 'STATUS: NORMAL';
+                alertIcon.innerText = '✔';
+            }
+        }
+
+        // ดึงข้อมูลจาก Google Sheets API
+        async function fetchSensorData() {
             try {
                 const response = await fetch(SCRIPT_URL);
-                globalData = await response.json();
+                const data = await response.json();
 
-                if (!globalData || globalData.length === 0) {
-                    stateView.innerHTML = `<div class="state-container"><p>ไม่พบข้อมูลในระบบ</p></div>`;
-                    updateStats([]);
-                    return;
+                if (data && data.length > 0) {
+                    // ดึงค่าล่าสุด (แถวสุดท้าย)
+                    const latest = data[data.length - 1];
+                    const distanceVal = parseFloat(latest.distance) || 0;
+
+                    // 1. อัปเดต ตัวเลขระยะทาง
+                    document.getElementById('current-distance').innerText = `${distanceVal.toFixed(1)} cm`;
+                    document.getElementById('last-updated').innerText = `Last Updated: ${latest.timestamp || 'Just now'}`;
+
+                    // 2. อัปเดต Gauge & Alert Banner
+                    updateGauge(distanceVal);
+                    updateAlertStatus(distanceVal);
+
+                    // 3. อัปเดตข้อมูลกราฟเส้น (แสดงสูงสุด 10 ข้อมูลล่าสุด)
+                    const recentData = data.slice(-10);
+                    distanceChart.data.labels = recentData.map(item => {
+                        // ดึงเฉพาะเวลา HH:mm:ss
+                        return item.timestamp ? item.timestamp.split(' ')[1] || item.timestamp : '';
+                    });
+                    distanceChart.data.datasets[0].data = recentData.map(item => parseFloat(item.distance) || 0);
+                    distanceChart.update();
                 }
-
-                stateView.innerHTML = ''; // ซ่อน Loading
-                renderTable(globalData);
-                updateStats(globalData);
-
             } catch (error) {
-                console.error('Error:', error);
-                stateView.innerHTML = `
-                    <div class="state-container" style="color: #ef4444;">
-                        <p>⚠️ ไม่สามารถเชื่อมต่อกับ Google Sheetได้ กรุณาตรวจสอบลิงก์ Script URL</p>
-                    </div>
-                `;
+                console.error('Fetch Error:', error);
+                document.getElementById('last-updated').innerText = 'Connection Error!';
             }
         }
 
-        // ฟังก์ชันสร้างตารางข้อมูล
-        function renderTable(data) {
-            const tableBody = document.getElementById('table-body');
-            tableBody.innerHTML = '';
-
-            if(data.length === 0) {
-                document.getElementById('state-view').innerHTML = `<div class="state-container"><p>ไม่พบข้อมูลที่ค้นหา</p></div>`;
-                return;
-            } else {
-                document.getElementById('state-view').innerHTML = '';
-            }
-
-            data.forEach(item => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="time-text">${item.timestamp || '-'}</td>
-                    <td><span class="student-id">${item.studentId || '-'}</span></td>
-                    <td class="student-name">${item.name || '-'}</td>
-                    <td><span class="distance-badge">${item.distance || '0'}</span></td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // ฟังก์ชันคำนวณและแสดงค่า Stats
-        function updateStats(data) {
-            document.getElementById('stat-total').innerText = data.length.toLocaleString();
-
-            let totalDist = 0;
-            let validCount = 0;
-
-            data.forEach(item => {
-                // แปลงค่าระยะทางเป็นตัวเลข
-                let dist = parseFloat(item.distance);
-                if (!isNaN(dist)) {
-                    totalDist += dist;
-                    validCount++;
-                }
-            });
-
-            const avgDist = validCount > 0 ? (totalDist / validCount).toFixed(1) : 0;
-
-            document.getElementById('stat-sum-distance').innerHTML = `${totalDist.toLocaleString()} <span style="font-size: 1rem; font-weight: 400;">กม.</span>`;
-            document.getElementById('stat-avg-distance').innerHTML = `${avgDist} <span style="font-size: 1rem; font-weight: 400;">กม.</span>`;
-        }
-
-        // ฟังก์ชันค้นหาข้อมูลแบบ Real-time
-        function filterData() {
-            const keyword = document.getElementById('search-input').value.toLowerCase().trim();
-            
-            const filtered = globalData.filter(item => {
-                const nameMatch = (item.name || '').toLowerCase().includes(keyword);
-                const idMatch = (item.studentId || '').toString().toLowerCase().includes(keyword);
-                return nameMatch || idMatch;
-            });
-
-            renderTable(filtered);
-        }
-
-        // โหลดข้อมูลอัตโนมัติเมื่อเปิดหน้า
-        fetchStudentData();
+        // เรียกทำงานเมื่อโหลดหน้าเว็บ
+        window.onload = () => {
+            initChart();
+            fetchSensorData();
+            // ดึงข้อมูลใหม่อัตโนมัติทุกๆ 5 วินาที
+            setInterval(fetchSensorData, 5000);
+        };
     </script>
 </body>
 </html>
