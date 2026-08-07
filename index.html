@@ -295,31 +295,72 @@
         gap: 0.75rem;
     }
 
-    /* สไตล์โลโก้ที่เพิ่มเข้ามา */
-    .system-info-logo {
-        max-width: 140px;
-        height: auto;
-        object-fit: contain;
-        margin-bottom: 0.25rem;
-        border-radius: 6px;
-    }
+/* --- ตกแต่ง System Info Card ใหม่ --- */
+.system-info-card {
+    align-items: stretch; 
+    justify-content: flex-start;
+    gap: 1rem;
+}
 
-    .info-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 0.25rem;
-        text-transform: uppercase;
-    }
+/* หัวข้อการ์ด */
+.info-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    text-align: center;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
+}
 
-    .info-item {
-        font-size: 0.9rem;
-        color: var(--text-main);
-    }
+/* จัดโลโก้ให้อยู่กึ่งกลาง */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
 
-    .info-item span {
-        font-weight: 600;
-    }
+.system-info-logo {
+    max-width: 130px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    background-color: #ffffff;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+/* ตกแต่งรายการข้อมูลอุปกรณ์ */
+.info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    border-left: 4px solid #38bdf8;
+}
+
+.info-label {
+    font-weight: 700;
+    color: #475569;
+}
+
+.info-value {
+    font-weight: 600;
+    color: #0f172a;
+}
     </style>
 </head>
 <body>
@@ -384,16 +425,31 @@
                     <canvas id="distanceChart"></canvas>
                 </div>
 
-                <!-- System Info Card -->
-                <div class="card system-info-card">
-                    <div class="info-title">system info</div>
-                    <img src="https://www.sskru.ac.th/wp-content/uploads/2023/01/200x200-%E0%B8%A7%E0%B8%B4%E0%B8%97.png" alt="System Logo" class="system-info-logo">
-                    <div class="info-item"><span>Device ID:</span> ESP32-SENSOR-01</div>
-                    <div class="info-item"><span>Firmware Version:</span> 1.2.0</div>
-                    <div class="info-item"><span>Sensor Type:</span> Ultrasonic HC-SR04</div>
-                </div>
-            </div>
+<!-- System Info Card -->
+<div class="card system-info-card">
+    <div class="info-title">💻 ข้อมูลอุปกรณ์ที่ใช้งาน</div>
+    
+    <!-- ส่วนโลโก้ตรงกลาง -->
+    <div class="logo-container">
+        <img src="https://www.sskru.ac.th/wp-content/uploads/2023/01/200x200-%E0%B8%A7%E0%B8%B4%E0%B8%97.png" alt="System Logo" class="system-info-logo">
+    </div>
+    
+    <!-- รายการข้อมูลอุปกรณ์ -->
+    <div class="info-list">
+        <div class="info-item">
+            <span class="info-label">Device ID:</span> 
+            <span class="info-value">ESP32-SENSOR-01</span>
         </div>
+        <div class="info-item">
+            <span class="info-label">Firmware:</span> 
+            <span class="info-value">1.2.0</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Sensor Type:</span> 
+            <span class="info-value">HC-SR04</span>
+        </div>
+    </div>
+</div>
 
         <!-- Footer -->
         <footer>
